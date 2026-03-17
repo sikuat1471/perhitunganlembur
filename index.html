@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Absensi Lembur Pegawai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --verdigris: #40B3A2;
+            --verdigris-dark: #2D8B7D;
+            --verdigris-light: #5ED4C2;
+            --greenish-white: #F0FDF6;
+            --greenish-cream: #E6F5ED;
+            --accent-red: #DC2626;
+            --accent-red-light: #FEE2E2;
+            --text-dark: #1A3A32;
+            --border-color: #B8E0D8;
+            --card-bg: rgba(255, 255, 255, 0.92);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Source Sans 3', sans-serif; background: var(--greenish-white); color: var(--text-dark); min-height: 100vh; }
+        .font-display { font-family: 'Playfair Display', serif; }
+
+        .bg-pattern {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(ellipse at 20% 20%, rgba(64, 179, 162, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(94, 212, 194, 0.12) 0%, transparent 50%);
+        }
+
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
+        .animated-illustration { animation: float 3s ease-in-out infinite; }
+
+        .nav-menu {
+            background: linear-gradient(135deg, var(--verdigris-dark) 0%, var(--verdigris) 50%, var(--verdigris-light) 100%);
+            box-shadow: 0 4px 20px rgba(64, 179, 162, 0.3);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-link { padding: 0.75rem 1.25rem; color: rgba(255, 255, 255, 0.8); font-weight: 500; transition: all 0.3s ease; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+        .nav-link:hover, .nav-link.active { color: white; background: rgba(255, 255, 255, 0.15); }
+
+        .dropdown { position: relative; }
+        .dropdown-menu { 
+            position: absolute; top: 100%; left: 0; 
+            background: white; min-width: 200px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1); 
+            border-radius: 0 0 8px 8px; 
+            opacity: 0; visibility: hidden; transform: translateY(-10px); 
+            transition: all 0.2s ease; z-index: 50; overflow: hidden;
+        }
+        .dropdown:hover .dropdown-menu, .dropdown.active .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .dropdown-item { display: block; padding: 0.75rem 1.25rem; color: var(--text-dark); font-size: 0.9rem; transition: background 0.2s; cursor: pointer; }
+        .dropdown-item:hover { background: var(--greenish-cream); color: var(--verdigris-dark); font-weight: 600; }
+        .dropdown-item.active { background: var(--verdigris); color: white; }
+
+        .glass-card { background: var(--card-bg); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 4px 15px rgba(64, 179, 162, 0.05); }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--verdigris-dark), var(--verdigris));
+            color: white; border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem;
+            box-shadow: 0 10px 30px rgba(45, 139, 125, 0.3); position: relative; overflow: hidden;
+        }
+        .dashboard-header::before {
+            content: ''; position: absolute; top: 0; right: 0; width: 300px; height: 100%;
+            background: url('https://z-cdn-media.chatglm.cn/files/b8bffa74-ccd7-43df-ac0a-7d38232e3901.png?auth_key=1872868863-b6cd966dc51a4c34aa738032b487a895-0-e6beed34fb7fb9a9650976366f590c26') no-repeat right center;
+            background-size: contain; opacity: 0.2;
+        }
+        .dashboard-img-container { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border: 1px solid var(--border-color); display: flex; justify-content: center; align-items: center; background: white; padding: 1rem; }
+        .dashboard-img { width: 100%; max-width: 600px; height: auto; display: block; transition: transform 0.3s ease; }
+        .dashboard-img:hover { transform: scale(1.02); }
+
+        .input-field { background: rgba(255, 255, 255, 0.9); border: 2px solid var(--border-color); border-radius: 8px; padding: 0.5rem; font-size: 0.9rem; transition: all 0.3s ease; color: var(--text-dark); width: 100%; }
+        .input-field:focus { outline: none; border-color: var(--verdigris); }
+        .input-sm { padding: 0.4rem; font-size: 0.85rem; }
+
+        .btn-primary { background: linear-gradient(135deg, var(--verdigris-dark), var(--verdigris)); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(64, 179, 162, 0.3); }
+        .btn-secondary { background: transparent; color: var(--verdigris-dark); padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; border: 2px solid var(--verdigris); cursor: pointer; transition: all 0.3s ease; }
+        .btn-secondary:hover { background: var(--verdigris); color: white; }
+        .btn-danger-sm { background: #FEE2E2; color: #DC2626; padding: 0.25rem 0.5rem; border-radius: 4px; border: none; cursor: pointer; font-size: 0.75rem; }
+        .btn-danger-sm:hover { background: #FECACA; }
+        .btn-edit-sm { background: #FEF3C7; color: #D97706; padding: 0.25rem 0.5rem; border-radius: 4px; border: none; cursor: pointer; font-size: 0.75rem; }
+        .btn-edit-sm:hover { background: #FDE68A; }
+
+        .table-container { overflow-y: auto; overflow-x: auto; border-radius: 12px; border: 1px solid var(--border-color); max-height: 65vh; position: relative; }
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; }
+
+        .data-table th { 
+            background: linear-gradient(135deg, var(--verdigris), var(--verdigris-light)); color: white; 
+            padding: 4px 2px; font-weight: 600; text-align: center; 
+            white-space: nowrap; font-size: 0.7rem; border-bottom: 2px solid var(--verdigris-dark);
+            position: sticky; top: 0; z-index: 10;
+        }
+        #lemburTable thead { position: sticky; top: 0; z-index: 20; }
+        #lemburTable th { position: relative; } 
+        #lemburTable th.lembur-sticky-left, #lemburTable th.lembur-sticky-left-2 { position: sticky; z-index: 25; }
+        #lemburTable th.lembur-sticky-right, #lemburTable th.lembur-sticky-right-2 { position: sticky; z-index: 25; }
+        .data-table th.weekend { background: linear-gradient(135deg, var(--accent-red), #EF4444); border-bottom-color: #B91C1C; }
+
+        .data-table td { padding: 1px 0px; border-bottom: 1px solid var(--border-color); text-align: center; background: white; font-size: 0.7rem; vertical-align: middle; }
+        .data-table td.weekend { background: var(--accent-red-light); color: var(--accent-red); }
+
+        .sticky-col-1 { position: sticky; left: 0; z-index: 5; background: white; border-right: 1px solid var(--border-color); }
+        .sticky-col-2 { position: sticky; left: 25px; z-index: 5; background: white; border-right: 2px solid var(--border-color); box-shadow: 3px 0 6px rgba(0,0,0,0.1); }
+        .sticky-col-total { position: sticky; right: 45px; z-index: 5; background: white; border-left: 1px solid var(--border-color); box-shadow: -2px 0 5px rgba(0,0,0,0.1); }
+        .sticky-col-aksi { position: sticky; right: 0; z-index: 5; background: white; border-left: 2px solid var(--border-color); box-shadow: -3px 0 6px rgba(0,0,0,0.1); }
+        thead th.sticky-col-1, thead th.sticky-col-2 { z-index: 15 !important; background: linear-gradient(135deg, var(--verdigris), var(--verdigris-light)); }
+        thead th.sticky-col-total, thead th.sticky-col-aksi { z-index: 15 !important; background: linear-gradient(135deg, var(--verdigris), var(--verdigris-light)); }
+        tbody td.sticky-col-2 { text-align: left !important; padding-left: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+        
+        #masterPegawaiTable { font-size: 0.75rem; }
+        #masterPegawaiTable th, #masterPegawaiTable td { padding: 0.4rem 0.6rem; vertical-align: middle; }
+        #masterPegawaiTable thead th { background: linear-gradient(135deg, var(--verdigris-dark), var(--verdigris)); color: white; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        #masterPegawaiTable tbody td:nth-child(2) { text-align: left !important; font-weight: 500; color: var(--text-dark); }
+        #masterPegawaiTable thead th:nth-child(2) { text-align: center !important; }
+        #masterPegawaiTable tbody tr:hover { background-color: var(--greenish-cream); }
+
+        .time-input-group { display: flex; align-items: center; justify-content: center; gap: 1px; }
+        .time-input-manual { width: 32px; padding: 2px; border: 1px solid #E5E7EB; border-radius: 3px; text-align: center; font-size: 0.7rem; font-family: monospace; line-height: 1.2; }
+        .time-input-manual:focus { outline: none; border-color: var(--verdigris); background: white; box-shadow: 0 0 0 1px var(--verdigris); }
+        .time-separator { font-weight: bold; font-size: 0.7rem; color: #9CA3AF; margin: 0 1px; }
+        
+        .daily-total-box { min-width: 18px; padding: 1px 2px; border-radius: 3px; font-weight: bold; font-size: 0.6rem; text-align: center; margin-left: 2px; line-height: 1.2; }
+        .daily-total-box.normal { background: #E6FFFA; color: var(--verdigris-dark); }
+        .daily-total-box.ot { background: #FEF3C7; color: #D97706; }
+        .daily-total-box.weekend { background: #FEE2E2; color: var(--accent-red); }
+
+        .lembur-sticky-left { left: 0; background: white; }
+        .lembur-sticky-left-2 { left: 35px; background: white; border-right: 2px solid var(--border-color); box-shadow: 2px 0 5px rgba(0,0,0,0.05); text-align: left !important; padding-left: 5px; }
+        .lembur-sticky-right { right: 0; background: white; border-left: 2px solid var(--border-color); box-shadow: -2px 0 5px rgba(0,0,0,0.05); }
+        .lembur-sticky-right-2 { right: 110px; background: white; }
+
+        .lembur-header-hb { background: linear-gradient(135deg, #3B82F6, #60A5FA) !important; }
+        .lembur-header-hl { background: linear-gradient(135deg, #8B5CF6, #A78BFA) !important; }
+        .lembur-header-fin { background: linear-gradient(135deg, #059669, #34D399) !important; }
+
+        .currency-cell { text-align: right !important; font-family: 'Consolas', monospace; font-weight: 600; white-space: nowrap; padding-right: 10px !important; }
+        .auto-fill-cell { background: #F8FAFC !important; font-weight: 600; text-align: center; }
+        
+        .total-row { font-weight: 700; background: #F0FDF6 !important; border-top: 2px solid var(--verdigris); }
+        .total-row td { background: #F0FDF6 !important; }
+
+        .month-nav { display: flex; align-items: center; gap: 1rem; }
+        .month-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--verdigris); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .month-btn:hover { background: var(--verdigris-dark); transform: scale(1.1); }
+
+        .toggle-holiday-btn { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 3px; background: rgba(255,255,255,0.2); border: none; cursor: pointer; margin-left: 2px; vertical-align: middle; }
+        .toggle-holiday-btn svg { width: 8px; height: 8px; color: white; }
+        .is-holiday-indicator { color: #FFD700; }
+
+        .stat-card { background: white; border-radius: 12px; padding: 1.25rem; border-left: 4px solid var(--verdigris); box-shadow: 0 4px 15px rgba(64, 179, 162, 0.1); }
+        .stat-number { font-size: 1.5rem; font-weight: 700; color: var(--verdigris-dark); }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        .settings-item { background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .settings-group { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+        .settings-group h4 { font-weight: 600; margin-bottom: 0.75rem; color: var(--verdigris-dark); }
+        .settings-subgroup { background: rgba(255,255,255,0.5); border: 1px dashed var(--border-color); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem; }
+        .settings-subgroup h5 { font-size: 0.8rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.5rem; }
+
+        .settings-sidebar {
+            background: white; border-radius: 16px; border: 1px solid var(--border-color);
+            padding: 1.5rem; height: fit-content; position: sticky; top: 80px;
+        }
+        .settings-link {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px;
+            color: var(--text-dark); font-weight: 500; cursor: pointer; transition: all 0.2s;
+            margin-bottom: 0.5rem; text-decoration: none;
+        }
+        .settings-link:hover { background: var(--greenish-cream); color: var(--verdigris-dark); }
+        .settings-link.active { background: var(--verdigris); color: white; }
+        .settings-link svg { width: 18px; height: 18px; }
+
+        .setting-content { display: none; }
+        .setting-content.active { display: block; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--greenish-cream); }
+        ::-webkit-scrollbar-thumb { background: var(--verdigris); border-radius: 4px; }
+
+        .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--verdigris-dark); color: white; padding: 0.8rem 1.25rem; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 300; display: flex; align-items: center; gap: 0.5rem; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 58, 50, 0.5); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: white; border-radius: 20px; padding: 2rem; max-width: 400px; width: 90%; transform: scale(0.9); transition: all 0.3s ease; }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+
+        .progress-bg { background: #E5E7EB; border-radius: 9999px; height: 12px; overflow: hidden; }
+        .progress-bar { height: 100%; border-radius: 9999px; transition: width 0.5s ease; }
+
+        .pagination-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.5rem; border-top: 1px solid var(--border-color); }
+        .page-btn { padding: 0.25rem 0.75rem; border: 1px solid var(--border-color); background: white; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .page-btn.active { background: var(--verdigris); color: white; border-color: var(--verdigris); }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+
+    <nav class="nav-menu">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-center">
+                        <img src="https://z-cdn-media.chatglm.cn/files/b8bffa74-ccd7-43df-ac0a-7d38232e3901.png?auth_key=1872868863-b6cd966dc51a4c34aa738032b487a895-0-e6beed34fb7fb9a9650976366f590c26" alt="Logo BPS" class="h-10 w-auto">
+                    </div>
+                    <h1 class="font-display text-xl font-bold text-white">BADAN PUSAT STATISTIK</h1>
+                </div>
+                <div class="hidden md:flex items-center gap-1">
+                    <a class="nav-link active" data-view="dashboard" onclick="switchView('dashboard')">Dashboard</a>
+                    <div class="dropdown">
+                        <a class="nav-link" onclick="toggleDropdown(this)">Lembur<svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item active" data-view="input-jam" onclick="switchView('input-jam')">Input Jam</a>
+                            <a class="dropdown-item" data-view="rekap" onclick="switchView('rekap')">Rekap Jam</a>
+                            <a class="dropdown-item" data-view="perhitungan" onclick="switchView('perhitungan')">Perhitungan Lembur</a>
+                        </div>
+                    </div>
+                    <a class="nav-link" data-view="pengaturan" onclick="switchView('pengaturan')">Pengaturan</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Dashboard View -->
+        <section id="dashboardView" class="view-section active">
+            <div class="dashboard-header">
+                <div class="relative z-10">
+                    <h2 class="font-display text-3xl font-bold mb-2">PERHITUNGAN LEMBUR PEGAWAI</h2>
+                    <p class="opacity-90 text-2xl font-light">BPS Kota Pekanbaru</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="glass-card p-6 transform hover:scale-105 transition-transform duration-300">
+                    <p class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Nilai Pagu Lembur</p>
+                    <p class="text-2xl font-bold text-green-600" id="paguLemburDisplay">Rp 0</p>
+                    <div class="mt-2 text-xs text-gray-400">Tahun <span id="yearPaguLabel"></span></div>
+                </div>
+                <div class="glass-card p-6 transform hover:scale-105 transition-transform duration-300">
+                    <p class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Terpakai</p>
+                    <p class="text-2xl font-bold text-red-500" id="paguTerpakai">Rp 0</p>
+                    <div class="mt-2 h-2 bg-gray-200 rounded-full mt-3"><div class="h-2 bg-red-400 rounded-full" style="width:0%" id="miniProgress"></div></div>
+                </div>
+                <div class="glass-card p-6 transform hover:scale-105 transition-transform duration-300">
+                    <p class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Sisa Pagu</p>
+                    <p class="text-2xl font-bold text-teal-600" id="paguSisa">Rp 0</p>
+                    <div class="mt-2 text-xs text-gray-400" id="persentasePagu">0% Terpakai</div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-display text-lg font-bold text-gray-800">Visualisasi Perhitungan</h3>
+                </div>
+                <div class="dashboard-img-container">
+                    <img src="https://definisipengertian.net/wp-content/uploads/2019/12/cara-menghitung-uang-lembur-476.jpg" alt="Ilustrasi Perhitungan Lembur" class="dashboard-img">
+                </div>
+            </div>
+
+            <div class="glass-card p-6">
+                 <div class="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Progress Penggunaan Anggaran</span>
+                    <span id="dashboardProgressPercent" class="font-bold text-teal-700">0%</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-bar bg-gradient-to-r from-green-400 to-green-600" style="width: 0%;" id="progressBar"></div>
+                </div>
+            </div>
+
+            <div class="text-left mt-8 text-xs italic text-gray-400">
+                @Copyright_Putu_BPS Kota Pekanbaru
+            </div>
+        </section>
+
+        <!-- Input Jam View -->
+        <section id="input-jamView" class="view-section">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div class="stat-card"><p class="text-xs text-gray-500 mb-1">Total Pegawai</p><p class="stat-number" id="inputTotalPegawai">0</p></div>
+                <div class="stat-card" style="border-left-color: var(--verdigris-light);"><p class="text-xs text-gray-500 mb-1">Hari Kerja</p><p class="stat-number" id="inputHariKerja">0</p></div>
+                <div class="stat-card" style="border-left-color: var(--accent-red);"><p class="text-xs text-gray-500 mb-1">Hari Libur</p><p class="stat-number" id="inputWeekendDays">0</p></div>
+                <div class="stat-card" style="border-left-color: #F59E0B;"><p class="text-xs text-gray-500 mb-1">Bulan Aktif</p><p class="stat-number" id="inputBulanAktif">-</p></div>
+            </div>
+
+            <div class="glass-card p-4 mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <h2 class="font-display text-xl font-bold text-gray-800">Input Jam Kerja</h2>
+                        <div class="month-nav">
+                            <button class="month-btn" onclick="changeMonth(-1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+                            <span class="font-semibold min-w-[160px] text-center" id="monthYearLabel">-</span>
+                            <button class="month-btn" onclick="changeMonth(1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="openModal()"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg> Tambah Pegawai</button>
+                </div>
+            </div>
+
+            <div class="glass-card p-4">
+                <div class="table-container" id="tableWrapper" style="display: none;">
+                    <table class="data-table" id="absensiTable">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination-controls" id="paginationControls">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-600">Tampilkan:</span>
+                        <select id="rowsPerPage" class="input-field" style="width: 70px; padding: 0.25rem;" onchange="changeRowsPerPage()">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="30">30</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span class="text-xs text-gray-600">data</span>
+                    </div>
+                    <div class="flex items-center gap-1" id="pageNumbers"></div>
+                </div>
+                <div class="text-center py-12" id="emptyState">
+                    <h3 class="text-md font-semibold text-gray-600 mb-2">Tidak ada pegawai</h3>
+                    <button class="btn-secondary" onclick="openModal()">Tambah Pegawai</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Rekap Jam View -->
+        <section id="rekapView" class="view-section">
+            <div class="glass-card p-4 mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <h2 class="font-display text-xl font-bold text-gray-800">Rekap Jam Kerja</h2>
+                        <div class="month-nav">
+                            <button class="month-btn" onclick="changeRekapMonth(-1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+                            <span class="font-semibold min-w-[160px] text-center" id="rekapMonthLabel">-</span>
+                            <button class="month-btn" onclick="changeRekapMonth(1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+                        </div>
+                    </div>
+                    <button class="btn-secondary" onclick="printRekap()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        Cetak
+                    </button>
+                </div>
+                <div class="table-container" style="max-height: 75vh;">
+                    <table class="data-table" id="rekapTable">
+                        <thead id="rekapTableHead"></thead>
+                        <tbody id="rekapTableBody"></tbody>
+                    </table>
+                </div>
+                 <div class="text-center py-12" id="rekapEmptyState" style="display:none;">
+                     <h3 class="text-md font-semibold text-gray-600 mb-2">Tidak ada data</h3>
+                </div>
+            </div>
+        </section>
+
+        <!-- Perhitungan Lembur View -->
+        <section id="perhitunganView" class="view-section">
+            <div class="glass-card p-4 mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <h2 class="font-display text-xl font-bold text-gray-800">Perhitungan Lembur</h2>
+                        <div class="month-nav">
+                            <button class="month-btn" onclick="changeLemburMonth(-1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+                            <span class="font-semibold min-w-[160px] text-center" id="lemburMonthLabel">-</span>
+                            <button class="month-btn" onclick="changeLemburMonth(1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+                        </div>
+                    </div>
+                    <button class="btn-secondary" onclick="printLembur()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        Cetak
+                    </button>
+                </div>
+                <div class="table-container" style="max-height: 75vh;">
+                    <table class="data-table" id="lemburTable">
+                        <thead id="lemburTableHead"></thead>
+                        <tbody id="lemburTableBody"></tbody>
+                        <tfoot id="lemburTableFoot"></tfoot>
+                    </table>
+                </div>
+                 <div class="text-center py-12" id="lemburEmptyState" style="display:none;">
+                     <h3 class="text-md font-semibold text-gray-600 mb-2">Tidak ada data</h3>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pengaturan View -->
+        <section id="pengaturanView" class="view-section">
+             <div class="flex flex-col md:flex-row gap-6">
+                 <div class="w-full md:w-64 flex-shrink-0">
+                     <div class="settings-sidebar">
+                         <h2 class="font-display text-lg font-bold text-gray-800 mb-4">Menu Pengaturan</h2>
+                         <nav class="flex flex-col">
+                             <a href="#db-pegawai" class="settings-link active" onclick="setActiveSetting(this, event)">
+                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                 Database Pegawai
+                             </a>
+                             <a href="#pagu" class="settings-link" onclick="setActiveSetting(this, event)">
+                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                 Pagu Anggaran
+                             </a>
+                             <a href="#jam-kerja" class="settings-link" onclick="setActiveSetting(this, event)">
+                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                 Jam Kerja Standar
+                             </a>
+                             <a href="#manajemen" class="settings-link" onclick="setActiveSetting(this, event)">
+                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                                 Manajemen Data
+                             </a>
+                         </nav>
+                     </div>
+                 </div>
+
+                 <div class="flex-1 space-y-6">
+                     <div id="db-pegawai" class="setting-content active glass-card p-6">
+                         <h2 class="font-display text-xl font-bold text-gray-800 mb-4">Database Pegawai</h2>
+                         <p class="text-xs text-gray-500 mb-4">Kelola data induk pegawai. Data akan otomatis tersimpan.</p>
+                         <div class="mb-4 flex justify-end">
+                              <button class="btn-primary btn-sm" onclick="openMasterModal()" style="padding: 0.5rem 1rem;">
+                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg> Tambah Data
+                             </button>
+                         </div>
+                         <div class="table-container" style="max-height: 400px;">
+                             <table class="data-table" id="masterPegawaiTable">
+                                 <thead><tr><th style="width: 40px;">No</th><th>Nama Pegawai</th><th style="width: 80px;">Gol.</th><th style="width: 80px;">Aksi</th></tr></thead>
+                                 <tbody id="masterPegawaiBody"></tbody>
+                             </table>
+                         </div>
+                     </div>
+                      
+                     <div id="pagu" class="setting-content glass-card p-6">
+                         <h2 class="font-display text-xl font-bold text-gray-800 mb-4">Pagu Anggaran Lembur</h2>
+                         <p class="text-xs text-gray-500 mb-2">Nilai ini akan tampil di Dashboard dan masuk ke file Backup.</p>
+                         <div class="settings-item border-0 p-0 mb-0">
+                             <div><h3 class="font-semibold text-gray-800">Nilai Pagu Lembur (Rp)</h3></div>
+                             <input type="number" id="settingsPaguLembur" class="input-field" style="width: 200px;" placeholder="Contoh: 50000000" onchange="saveSettings()">
+                         </div>
+                     </div>
+     
+                     <div id="jam-kerja" class="setting-content glass-card p-6">
+                         <h2 class="font-display text-xl font-bold text-gray-800 mb-4">Jam Kerja Standar</h2>
+                         <div class="settings-item border-0 p-0 mb-4">
+                             <div><h3 class="font-semibold text-gray-800">Jam Kerja (Senin - Kamis)</h3></div>
+                             <div class="flex gap-2">
+                                 <input type="text" id="masukMonThu" class="input-field text-center" style="width: 70px;" value="07:30" onchange="saveSettings()">
+                                 <span class="self-center font-bold">-</span>
+                                 <input type="text" id="pulangMonThu" class="input-field text-center" style="width: 70px;" value="16:00" onchange="saveSettings()">
+                             </div>
+                         </div>
+                         <div class="settings-item border-0 p-0">
+                             <div><h3 class="font-semibold text-gray-800">Jam Kerja (Jumat)</h3></div>
+                             <div class="flex gap-2">
+                                 <input type="text" id="masukFri" class="input-field text-center" style="width: 70px;" value="07:30" onchange="saveSettings()">
+                                 <span class="self-center font-bold">-</span>
+                                 <input type="text" id="pulangFri" class="input-field text-center" style="width: 70px;" value="16:30" onchange="saveSettings()">
+                             </div>
+                         </div>
+                         <div class="settings-group mt-6">
+                             <h4>Rentang Tanggal Khusus 1</h4>
+                             <p class="text-xs text-gray-400 mb-2">Pengaturan ini akan masuk ke file Backup.</p>
+                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                 <div><label class="text-xs font-medium">Tanggal Mulai</label><input type="date" id="range1_start" class="input-field" onchange="saveSettings()"></div>
+                                 <div><label class="text-xs font-medium">Tanggal Selesai</label><input type="date" id="range1_end" class="input-field" onchange="saveSettings()"></div>
+                             </div>
+                             <div class="settings-subgroup">
+                                 <h5>Senin - Kamis</h5>
+                                 <div class="flex flex-wrap gap-4 items-end">
+                                     <div><label class="text-xs font-medium">Masuk</label><input type="text" id="range1_masuk_mt" class="input-field input-sm" placeholder="07:30" onchange="saveSettings()"></div>
+                                     <div><label class="text-xs font-medium">Pulang</label><input type="text" id="range1_pulang_mt" class="input-field input-sm" placeholder="16:00" onchange="saveSettings()"></div>
+                                 </div>
+                             </div>
+                             <div class="settings-subgroup">
+                                 <h5>Jumat</h5>
+                                 <div class="flex flex-wrap gap-4 items-end">
+                                     <div><label class="text-xs font-medium">Masuk</label><input type="text" id="range1_masuk_fri" class="input-field input-sm" placeholder="07:30" onchange="saveSettings()"></div>
+                                     <div><label class="text-xs font-medium">Pulang</label><input type="text" id="range1_pulang_fri" class="input-field input-sm" placeholder="16:30" onchange="saveSettings()"></div>
+                                 </div>
+                             </div>
+                         </div>
+                         <div class="mt-4 flex justify-end"><button class="btn-primary" onclick="saveSettings()">Simpan Manual</button></div>
+                     </div>
+     
+                     <div id="manajemen" class="setting-content glass-card p-6">
+                         <h3 class="font-display text-lg font-bold text-gray-800 mb-4">Manajemen Data</h3>
+                         <div class="settings-item border-0 p-0 mb-4"><div><h3 class="font-semibold text-gray-800">Export Data (Backup)</h3><p class="text-xs text-gray-400">Mencakup Pagu, Rentang Tanggal, dan Absensi.</p></div><button class="btn-secondary" onclick="exportAllData()">Export</button></div>
+                         <div class="settings-item border-0 p-0 mb-4"><div><h3 class="font-semibold text-gray-800">Import Data</h3></div><label class="btn-secondary cursor-pointer">Import<input type="file" accept=".json" onchange="importData(event)" class="hidden"></label></div>
+                         <div class="settings-item border-0 p-0"><div><h3 class="font-semibold text-red-600">Hapus Semua</h3></div><button class="btn-danger-sm" onclick="resetAllData()" style="padding: 0.5rem 1rem;">Hapus</button></div>
+                     </div>
+                 </div>
+             </div>
+        </section>
+    </main>
+
+    <!-- Modal Input Jam -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-display text-lg font-bold text-gray-800" id="modalTitle">Tambah Pegawai</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeModal()"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <p class="text-sm text-gray-500 mb-4">Pegawai akan ditambahkan ke bulan: <strong id="modalMonthInfo">-</strong></p>
+            <input type="hidden" id="editPegawaiId" value="">
+            
+            <form id="pegawaiForm" onsubmit="savePegawai(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-medium">Nama Pegawai</label>
+                        <select id="namaPegawai" class="input-field" required>
+                             <option value="">Pilih dari Database</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium">Golongan</label>
+                        <select id="golongan" class="input-field" required>
+                            <option value="">Pilih</option>
+                            <option value="III">III (A/B/C/D)</option>
+                            <option value="IV">IV (A/B/C/D)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-4"><button type="button" class="btn-secondary flex-1" onclick="closeModal()">Batal</button><button type="submit" class="btn-primary flex-1">Simpan</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Master Pegawai -->
+    <div class="modal-overlay" id="masterModalOverlay" onclick="closeMasterModalOutside(event)">
+        <div class="modal-content" style="max-width: 400px;" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-display text-lg font-bold text-gray-800" id="masterModalTitle">Tambah Data Pegawai</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeMasterModal()"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+             <form id="masterPegawaiForm" onsubmit="saveMasterPegawai(event)">
+                 <input type="hidden" id="masterEditIndex" value="">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-medium">Nama Pegawai <span class="text-red-500">*</span></label>
+                        <!-- ID untuk input nama adalah masterNama -->
+                        <input type="text" id="masterNama" class="input-field" required placeholder="Nama lengkap">
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium">Golongan <span class="text-red-500">*</span></label>
+                        <select id="masterGolongan" class="input-field" required>
+                            <option value="">Pilih</option>
+                            <option value="III">III (A/B/C/D)</option>
+                            <option value="IV">IV (A/B/C/D)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-4"><button type="button" class="btn-secondary flex-1" onclick="closeMasterModal()">Batal</button><button type="submit" class="btn-primary flex-1">Simpan</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="toastIcon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span id="toastMessage"></span></div>
+
+    <script>
+        // --- Variables & Config ---
+        let allPegawaiData = {}; 
+        let customHolidays = [];
+        let settings = { 
+            masukMonThu: '07:30', 
+            pulangMonThu: '16:00',
+            masukFri: '07:30',
+            pulangFri: '16:30',
+            paguLembur: 0,
+            masterPegawai: [], 
+            range1: { start: '', end: '', masuk_mt: '', pulang_mt: '', masuk_fri: '', pulang_fri: '' }
+        };
+
+        const defaultMasterList = [
+            "Arie Nurlaela, A.Md., S.Stat.", "Aulia Hasif, SST, M.Si", "Benny Dwi Kifana, ST, M.Si", "Callista Luthfiyah Cahyani, S.Tr.Stat.", "Danang Gunawan, A.Md", "Desi Damaiyanti, SST, M.E.", "Dessy Syukriya Aryati, SST", "Erika Sari, SST", "Erlius Natalis Bancin", "Erwhin Widyanto, S.E", "Fajar Maulinda, SST, M.E.K.K", "Guswandi SST", "Hari Pebriyanto", "I Putu Diastudi", "Ifra Warnita, SST, M.E.K.K", "Imelda Andriani, SST", "Ira Maharisa, SE, MM", "Lola Netty, S.Stat", "Mangatur Manurung, S.Si, M.Si.", "Marlis, SE", "Meita Komalasari, S.ST, M.Si.", "Musmuliadi, SE", "Mutiara Rintia Asnuri Putri, SST", "Nasrul Saputra, SST", "Nia Feriwati, S.Pt", "Noliza, SST", "Nurul Handayani, S.Tr.Stat.", "Oktaviani Armina", "Poppi Rahma Nanda, S.Tr.Stat.", "Razaliana, S.Sos", "Reny Roswita Nazar, S.Stat.", "Rizka Heryanti, S.Tr.Stat.", "Rudiarman, SE", "Suci Dwi Martiani, SST", "Sugiman, S.Kom", "Sumarlin, A.Md", "Ujang Nurhidayat, S.Kom", "Wahyu Adhiputra, SST", "Yuli Hairani, SST", "Aries Adi Putra, SST, SE, MM", "Asrizal, S.E.", "Annisa Nurhadirat, S.Stat.", "Dedi"
+        ];
+
+        const currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        let lemburMonth = currentDate.getMonth();
+        let lemburYear = currentDate.getFullYear();
+        let rekapMonth = currentDate.getMonth(); 
+        let rekapYear = currentDate.getFullYear(); 
+        const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+        let currentPage = 1;
+        let rowsPerPage = 10;
+        let maxRow = 0;
+        let maxCol = 0;
+
+        const lemburRates = {
+            'IV': { meal: 41000, taxRate: 0.15, HB: { 2: 72000, 3: 108000, 4: 144000 }, HL: { 2: 144000, 3: 216000, 4: 288000, 5: 360000, 6: 432000, 7: 504000, 8: 576000 } },
+            'III': { meal: 37000, taxRate: 0.05, HB: { 2: 60000, 3: 90000, 4: 120000 }, HL: { 2: 120000, 3: 180000, 4: 240000, 5: 300000, 6: 360000, 7: 420000, 8: 480000 } }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFromStorage(); loadSettings(); loadHolidays(); updateCurrentDate(); 
+            generateTable(); renderLemburTable(); renderRekapTable(); updateInputStats(); renderMasterPegawai();
+            updatePaguDisplay();
+        });
+
+        // --- Helpers ---
+        function getMonthKey(y, m) { return `${y}-${m}`; }
+        function updateCurrentDate() { document.getElementById('currentDate').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
+        function getDaysInMonth(month, year) { return new Date(year, month + 1, 0).getDate(); }
+        function formatNum(num) { return new Intl.NumberFormat('id-ID').format(num); }
+        
+        function isHoliday(day, month, year) {
+            const date = new Date(year, month, day);
+            const dayOfWeek = date.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            return isWeekend || customHolidays.includes(dateStr);
+        }
+        
+        function toggleCustomHoliday(day, month, year) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const date = new Date(year, month, day);
+            if (date.getDay() === 0 || date.getDay() === 6) return;
+            const index = customHolidays.indexOf(dateStr);
+            if (index > -1) customHolidays.splice(index, 1); else customHolidays.push(dateStr);
+            saveHolidays(); generateTable(); renderLemburTable(); renderRekapTable(); updateInputStats();
+            showToast('Status hari libur diubah');
+        }
+
+        function parseTimeStr(str) {
+            if (!str) return null;
+            let clean = str.replace(/[:.]/g, '');
+            if (clean.length < 3) return null;
+            let h, m;
+            if (clean.length === 3) { h = parseInt(clean.substring(0, 1)); m = parseInt(clean.substring(1, 3)); }
+            else { h = parseInt(clean.substring(0, 2)); m = parseInt(clean.substring(2, 4)); }
+            if (isNaN(h) || isNaN(m)) return null;
+            return { h, m };
+        }
+
+        function calculateRawHours(masukStr, pulangStr) {
+            const mIn = parseTimeStr(masukStr);
+            const mOut = parseTimeStr(pulangStr);
+            if (!mIn || !mOut) return 0;
+            let totalMinutesIn = mIn.h * 60 + mIn.m;
+            let totalMinutesOut = mOut.h * 60 + mOut.m;
+            if (totalMinutesOut < totalMinutesIn) totalMinutesOut += 24 * 60;
+            return (totalMinutesOut - totalMinutesIn) / 60;
+        }
+
+        function calculateDailyOvertime(masukStr, pulangStr, dayOfWeek, isHolidayFlag, year, month, day) {
+            const mOut = parseTimeStr(pulangStr);
+            if (!mOut) return 0;
+            if (isHolidayFlag) { return calculateRawHours(masukStr, pulangStr); }
+            
+            let limitTime = null;
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            let activeRange = null;
+
+            if (settings.range1.start && settings.range1.end) { if (dateStr >= settings.range1.start && dateStr <= settings.range1.end) activeRange = settings.range1; }
+
+            if (activeRange) {
+                if (dayOfWeek === 5) limitTime = parseTimeStr(activeRange.pulang_fri);
+                else if (dayOfWeek >= 1 && dayOfWeek <= 4) limitTime = parseTimeStr(activeRange.pulang_mt);
+            } else {
+                if (dayOfWeek === 5) limitTime = parseTimeStr(settings.pulangFri);
+                else if (dayOfWeek >= 1 && dayOfWeek <= 4) limitTime = parseTimeStr(settings.pulangMonThu);
+            }
+
+            if (!limitTime) return 0;
+            const limitMinutes = limitTime.h * 60 + limitTime.m;
+            const outMinutes = mOut.h * 60 + mOut.m;
+            if (outMinutes > limitMinutes) return (outMinutes - limitMinutes) / 60;
+            return 0;
+        }
+
+        function updateInputStats() {
+             const key = getMonthKey(currentYear, currentMonth);
+             const pegawaiList = allPegawaiData[key] || [];
+             document.getElementById('inputTotalPegawai').textContent = pegawaiList.length;
+             document.getElementById('inputBulanAktif').textContent = monthNames[currentMonth].substring(0, 3);
+             let workdays = 0, holidays = 0;
+             const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+             for (let d = 1; d <= daysInMonth; d++) { if (isHoliday(d, currentMonth, currentYear)) holidays++; else workdays++; }
+             document.getElementById('inputHariKerja').textContent = workdays;
+             document.getElementById('inputWeekendDays').textContent = holidays;
+             document.getElementById('yearPaguLabel').textContent = currentYear;
+        }
+
+        function calculateAnnualLembur() {
+            let totalAnnualNetto = 0;
+            for(let m=0; m<12; m++) {
+                const key = getMonthKey(currentYear, m);
+                const list = allPegawaiData[key] || [];
+                list.forEach(p => {
+                    const group = getGolonganGroup(p.golongan);
+                    const counts = calculateOvertimeCounts(p, m, currentYear);
+                    const fin = calculateLemburFinancials(group, counts);
+                    totalAnnualNetto += fin.netto;
+                });
+            }
+            return totalAnnualNetto;
+        }
+
+        function updatePaguDisplay() {
+            document.getElementById('paguLemburDisplay').textContent = `Rp ${formatNum(settings.paguLembur || 0)}`;
+            document.getElementById('settingsPaguLembur').value = settings.paguLembur || '';
+            const terpakai = calculateAnnualLembur();
+            const sisa = (settings.paguLembur || 0) - terpakai;
+            document.getElementById('paguTerpakai').textContent = `Rp ${formatNum(terpakai)}`;
+            document.getElementById('paguSisa').textContent = `Rp ${formatNum(sisa)}`;
+            const persen = settings.paguLembur > 0 ? (terpakai / settings.paguLembur) * 100 : 0;
+            document.getElementById('persentasePagu').textContent = persen.toFixed(1) + '% Terpakai';
+            document.getElementById('dashboardProgressPercent').textContent = persen.toFixed(1) + '%';
+            const miniBar = document.getElementById('miniProgress');
+            if(miniBar) miniBar.style.width = Math.min(persen, 100) + '%';
+            const bar = document.getElementById('progressBar');
+            bar.style.width = Math.min(persen, 100) + '%';
+            if (persen > 100) { bar.classList.remove('from-green-400', 'to-green-600'); bar.classList.add('from-red-400', 'to-red-600'); }
+            else { bar.classList.remove('from-red-400', 'to-red-600'); bar.classList.add('from-green-400', 'to-green-600'); }
+        }
+
+        function changeRowsPerPage() { rowsPerPage = parseInt(document.getElementById('rowsPerPage').value); currentPage = 1; generateTable(); }
+        function changePage(page) { currentPage = page; generateTable(); }
+        function renderPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / rowsPerPage);
+            const pageNumbersContainer = document.getElementById('pageNumbers');
+            pageNumbersContainer.innerHTML = '';
+            const prevBtn = document.createElement('button'); prevBtn.className = 'page-btn'; prevBtn.innerHTML = '&laquo;'; prevBtn.disabled = currentPage === 1; prevBtn.onclick = () => changePage(currentPage - 1); pageNumbersContainer.appendChild(prevBtn);
+            for (let i = 1; i <= totalPages; i++) { const btn = document.createElement('button'); btn.className = `page-btn ${i === currentPage ? 'active' : ''}`; btn.textContent = i; btn.onclick = () => changePage(i); pageNumbersContainer.appendChild(btn); }
+            const nextBtn = document.createElement('button'); nextBtn.className = 'page-btn'; nextBtn.innerHTML = '&raquo;'; nextBtn.disabled = currentPage === totalPages || totalPages === 0; nextBtn.onclick = () => changePage(currentPage + 1); pageNumbersContainer.appendChild(nextBtn);
+        }
+
+        function handleTableKeyDown(event) {
+            const input = event.target;
+            if (!input.classList.contains('time-input-manual')) return;
+            const row = parseInt(input.dataset.row); const col = parseInt(input.dataset.col); const type = input.dataset.type;
+            let nextRow = row; let nextCol = col; let nextType = type;
+            switch(event.key){case'ArrowUp':nextRow=row-1;event.preventDefault();break;case'ArrowDown':case'Enter':nextRow=row+1;event.preventDefault();break;case'ArrowLeft':if(type==='pulang'){nextType='masuk';}else{nextCol=col-1;nextType='pulang';}event.preventDefault();break;case'ArrowRight':case'Tab':if(type==='masuk'){nextType='pulang';}else{nextCol=col+1;nextType='masuk';}event.preventDefault();break;default:return;}
+            if(nextRow<0)nextRow=0;if(nextRow>=maxRow)nextRow=maxRow-1;if(nextCol<1)nextCol=1;if(nextCol>maxCol)nextCol=maxCol;
+            const nextInput=document.querySelector(`input[data-row="${nextRow}"][data-col="${nextCol}"][data-type="${nextType}"]`);
+            if(nextInput){nextInput.focus();nextInput.select();}
+        }
+
+        // --- Input Jam Logic ---
+        function generateTable() {
+            const key = getMonthKey(currentYear, currentMonth);
+            const fullPegawaiList = allPegawaiData[key] || [];
+            const startIndex = (currentPage - 1) * rowsPerPage; const endIndex = startIndex + rowsPerPage;
+            const pegawaiList = fullPegawaiList.slice(startIndex, endIndex);
+            const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+            const thead = document.getElementById('tableHead');
+            document.getElementById('monthYearLabel').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            maxRow = pegawaiList.length; maxCol = daysInMonth;
+            
+            let headerHTML = `<tr><th rowspan="2" class="sticky-col-1" style="width: 25px;">No</th><th rowspan="2" class="sticky-col-2" style="width: 180px;">Nama</th>`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const holiday = isHoliday(d, currentMonth, currentYear);
+                const date = new Date(currentYear, currentMonth, d); 
+                headerHTML += `<th class="${holiday ? 'weekend' : ''}">${dayNames[date.getDay()]}</th>`;
+            }
+            headerHTML += `<th rowspan="2" class="sticky-col-total" style="width: 60px;">Total</th><th rowspan="2" class="sticky-col-aksi" style="width: 50px;">Aksi</th></tr>`;
+            headerHTML += `<tr>`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const holiday = isHoliday(d, currentMonth, currentYear);
+                const date = new Date(currentYear, currentMonth, d); const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`; const isCustomHoliday = customHolidays.includes(dateStr);
+                headerHTML += `<th class="${holiday ? 'weekend' : ''}">${d}${!isWeekend ? `<button class="toggle-holiday-btn" onclick="toggleCustomHoliday(${d}, ${currentMonth}, ${currentYear})"><svg class="${isCustomHoliday ? 'is-holiday-indicator' : ''}" fill="${isCustomHoliday ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg></button>` : ''}</th>`;
+            }
+            thead.innerHTML = headerHTML;
+            
+            const tbody = document.getElementById('tableBody');
+            if (pegawaiList.length === 0) { tbody.innerHTML = ''; document.getElementById('emptyState').style.display = 'block'; document.getElementById('tableWrapper').style.display = 'none'; document.getElementById('paginationControls').style.display = 'none'; return; }
+            document.getElementById('emptyState').style.display = 'none'; document.getElementById('tableWrapper').style.display = 'block'; document.getElementById('paginationControls').style.display = 'flex';
+            renderPagination(fullPegawaiList.length);
+            let bodyHTML = '';
+            pegawaiList.forEach((p, i) => {
+                const displayIndex = startIndex + i;
+                bodyHTML += `<tr><td class="font-semibold sticky-col-1">${displayIndex + 1}</td><td class="sticky-col-2">${p.nama}</td>`;
+                let totalMonthly = 0;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const holiday = isHoliday(d, currentMonth, currentYear);
+                    const dayOfWeek = new Date(currentYear, currentMonth, d).getDay();
+                    const keyM = `${currentYear}-${currentMonth}-${d}-masuk`; const keyP = `${currentYear}-${currentMonth}-${d}-pulang`;
+                    const valM = p.absensi[keyM] || ''; const valP = p.absensi[keyP] || '';
+                    let rawH = calculateRawHours(valM, valP);
+                    totalMonthly += rawH;
+                    const displayH = Math.floor(rawH); 
+                    let boxClass = 'normal'; if (holiday) boxClass = 'weekend'; else if (displayH > 8) boxClass = 'ot'; 
+                    bodyHTML += `<td class="${holiday ? 'weekend' : ''}"><div class="time-input-group">
+                            <input type="text" class="time-input-manual ${holiday ? 'weekend' : ''}" value="${valM}" maxlength="5" data-row="${i}" data-col="${d}" data-type="masuk" onchange="updateAbsensi('${key}', '${p.id}', '${keyM}', this.value)" onkeydown="handleTableKeyDown(event)">
+                            <span class="time-separator">-</span>
+                            <input type="text" class="time-input-manual ${holiday ? 'weekend' : ''}" value="${valP}" maxlength="5" data-row="${i}" data-col="${d}" data-type="pulang" onchange="updateAbsensi('${key}', '${p.id}', '${keyP}', this.value)" onkeydown="handleTableKeyDown(event)">
+                            <span class="daily-total-box ${boxClass}">${displayH}</span></div></td>`;
+                }
+                bodyHTML += `<td class="sticky-col-total" style="font-weight:bold;">${totalMonthly.toFixed(1)}j</td>`;
+                bodyHTML += `<td class="sticky-col-aksi"><div style="display: flex; gap: 2px; justify-content: center;"><button class="btn-edit-sm" onclick="editPegawai('${p.id}', '${p.nama}', '${p.golongan}')"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button><button class="btn-danger-sm" onclick="deletePegawai('${p.id}')"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div></td></tr>`;
+            });
+            tbody.innerHTML = bodyHTML;
+        }
+
+        function updateAbsensi(monthKey, id, keyTime, val){const list=allPegawaiData[monthKey];if(!list)return;const p=list.find(x=>x.id===id);if(p){p.absensi[keyTime]=val;saveToStorage();generateTable();if(document.getElementById('perhitunganView').classList.contains('active'))renderLemburTable();if(document.getElementById('rekapView').classList.contains('active'))renderRekapTable();updatePaguDisplay();}}
+        function changeMonth(d){currentMonth+=d;if(currentMonth>11){currentMonth=0;currentYear++;}else if(currentMonth<0){currentMonth=11;currentYear--;}currentPage=1;generateTable();updateInputStats();updatePaguDisplay();lemburMonth=currentMonth;lemburYear=currentYear;renderLemburTable();rekapMonth=currentMonth;rekapYear=currentYear;renderRekapTable();}
+        
+        // --- Modal & Dropdown Logic ---
+        function populatePegawaiDropdown(selectedName = "") {
+            const select = document.getElementById('namaPegawai');
+            select.innerHTML = '<option value="">Pilih dari Database</option>';
+            (settings.masterPegawai || []).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.nama;
+                opt.textContent = p.nama;
+                if (p.nama === selectedName) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function openModal(){
+            document.getElementById('editPegawaiId').value='';
+            document.getElementById('pegawaiForm').reset();
+            document.getElementById('modalTitle').textContent="Tambah Pegawai";
+            document.getElementById('modalMonthInfo').textContent=`${monthNames[currentMonth]} ${currentYear}`;
+            populatePegawaiDropdown();
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function editPegawai(id, nama, golongan){
+            document.getElementById('editPegawaiId').value=id;
+            document.getElementById('golongan').value=golongan;
+            document.getElementById('modalTitle').textContent="Edit Data";
+            document.getElementById('modalMonthInfo').textContent=`${monthNames[currentMonth]} ${currentYear}`;
+            populatePegawaiDropdown(nama);
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function savePegawai(e){
+            e.preventDefault();
+            const editId=document.getElementById('editPegawaiId').value;
+            const nama=document.getElementById('namaPegawai').value;
+            const golongan=document.getElementById('golongan').value; if(!nama||!golongan)return;
+            const key=getMonthKey(currentYear,currentMonth);if(!allPegawaiData[key])allPegawaiData[key]=[];
+            if(editId){
+                const pIndex=allPegawaiData[key].findIndex(p=>p.id===editId);
+                if(pIndex!==-1){
+                    allPegawaiData[key][pIndex].nama=nama;
+                    allPegawaiData[key][pIndex].golongan=golongan;
+                    showToast('Data diupdate');
+                }
+            }
+            else{
+                if(allPegawaiData[key].some(p=>p.nama===nama)){showToast('Pegawai sudah ada',true);return;}
+                allPegawaiData[key].push({id:Date.now().toString(),nama,golongan,absensi:{}});
+                showToast('Pegawai ditambahkan');
+            }
+            saveToStorage();generateTable();renderLemburTable();renderRekapTable();updateInputStats();updatePaguDisplay();closeModal();
+        }
+        
+        function deletePegawai(id){if(confirm('Hapus pegawai ini?')){const key=getMonthKey(currentYear,currentMonth);allPegawaiData[key]=allPegawaiData[key].filter(p=>p.id!==id);saveToStorage();const remaining=allPegawaiData[key].length;const maxPage=Math.ceil(remaining/rowsPerPage);if(currentPage>maxPage)currentPage=maxPage||1;generateTable();renderLemburTable();renderRekapTable();updateInputStats();updatePaguDisplay();showToast('Dihapus');}}
+        function closeModal(){document.getElementById('modalOverlay').classList.remove('active');}
+        function closeModalOutside(e){if(e.target===e.currentTarget)closeModal();}
+
+        // --- Master Pegawai Logic ---
+        function renderMasterPegawai(){
+            const list = settings.masterPegawai || [];
+            const tbody = document.getElementById('masterPegawaiBody');
+            if(list.length === 0){
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Database kosong.</td></tr>'; 
+                return;
+            }
+            let html = '';
+            list.forEach((p, i) => {
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td>${p.nama}</td>
+                    <td>${p.golongan}</td>
+                    <td>
+                        <div style="display: flex; gap: 2px; justify-content: center;">
+                            <button class="btn-edit-sm" onclick="editMasterPegawai(${i})">Edit</button>
+                            <button class="btn-danger-sm" onclick="deleteMasterPegawai(${i})">Hapus</button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // PERBAIKAN: Fungsi Open Modal Master
+        function openMasterModal(isEdit = false, index = -1){
+            document.getElementById('masterPegawaiForm').reset();
+            document.getElementById('masterEditIndex').value = "";
+            
+            if(isEdit && index !== -1){
+                 const p = settings.masterPegawai[index];
+                 // PERBAIKAN BUG: 'masterNome' -> 'masterNama'
+                 document.getElementById('masterNama').value = p.nama;
+                 document.getElementById('masterGolongan').value = p.golongan;
+                 document.getElementById('masterEditIndex').value = index;
+                 document.getElementById('masterModalTitle').textContent = "Edit Data Pegawai";
+            } else {
+                 document.getElementById('masterModalTitle').textContent = "Tambah Data Pegawai";
+            }
+            
+            document.getElementById('masterModalOverlay').classList.add('active');
+        }
+
+        function editMasterPegawai(index){
+            openMasterModal(true, index);
+        }
+
+        function closeMasterModal(){ document.getElementById('masterModalOverlay').classList.remove('active'); }
+        function closeMasterModalOutside(e){ if(e.target===e.currentTarget) closeMasterModal(); }
+
+        function saveMasterPegawai(e){
+            e.preventDefault();
+            const index = document.getElementById('masterEditIndex').value;
+            const data = {
+                nama: document.getElementById('masterNama').value.trim(),
+                golongan: document.getElementById('masterGolongan').value
+            };
+
+            if(!data.nama || !data.golongan) { showToast('Nama dan Golongan wajib diisi', true); return; }
+            
+            if(index !== ""){
+                settings.masterPegawai[parseInt(index)] = data;
+                showToast('Data diupdate (Auto-save)');
+            } else {
+                if(settings.masterPegawai.some(p => p.nama.toLowerCase() === data.nama.toLowerCase())){
+                    showToast('Nama pegawai sudah ada', true); return;
+                }
+                settings.masterPegawai.push(data);
+                showToast('Pegawai ditambahkan (Auto-save)');
+            }
+            
+            saveSettings();
+            renderMasterPegawai();
+            closeMasterModal();
+        }
+
+        function deleteMasterPegawai(index){
+            if(confirm('Hapus dari database? Ini tidak menghapus data absensi yang sudah ada.')){
+                settings.masterPegawai.splice(index, 1);
+                saveSettings();
+                renderMasterPegawai();
+                showToast('Dihapus (Auto-save)');
+            }
+        }
+        
+        function setActiveSetting(el, event) {
+            if(event) event.preventDefault();
+            document.querySelectorAll('.settings-link').forEach(link => link.classList.remove('active'));
+            el.classList.add('active');
+            const targetId = el.getAttribute('href').substring(1);
+            document.querySelectorAll('.setting-content').forEach(content => content.classList.remove('active'));
+            const targetContent = document.getElementById(targetId);
+            if(targetContent) {
+                targetContent.classList.add('active');
+                if(targetId === 'db-pegawai') renderMasterPegawai();
+            }
+        }
+
+        // --- Rekap & Lembur Logic ---
+        function renderRekapTable(){
+            const key=getMonthKey(rekapYear,rekapMonth);const pegawaiList=allPegawaiData[key]||[];const tbody=document.getElementById('rekapTableBody');const thead=document.getElementById('rekapTableHead');const daysInMonth=getDaysInMonth(rekapMonth,rekapYear);
+            document.getElementById('rekapMonthLabel').textContent=`${monthNames[rekapMonth]} ${rekapYear}`;
+            let headerHTML=`<tr><th rowspan="2" class="lembur-sticky-left">No</th><th rowspan="2" class="lembur-sticky-left-2">Nama Pegawai</th>`;
+            for(let d=1;d<=daysInMonth;d++){headerHTML+=`<th class="${isHoliday(d,rekapMonth,rekapYear)?'weekend':''}">${dayNames[new Date(rekapYear,rekapMonth,d).getDay()]}</th>`;}
+            headerHTML+=`<th rowspan="2">Total</th></tr><tr>`;
+            for(let d=1;d<=daysInMonth;d++){headerHTML+=`<th class="${isHoliday(d,rekapMonth,rekapYear)?'weekend':''}">${d}</th>`;}
+            thead.innerHTML=headerHTML;
+            if(pegawaiList.length===0){tbody.innerHTML='';document.getElementById('rekapEmptyState').style.display='block';return;}document.getElementById('rekapEmptyState').style.display='none';
+            let bodyHTML='';
+            pegawaiList.forEach((p,i)=>{
+                let totalHours=0;
+                bodyHTML+=`<tr><td class="font-semibold lembur-sticky-left">${i+1}</td><td class="lembur-sticky-left-2">${p.nama}</td>`;
+                for(let d=1;d<=daysInMonth;d++){
+                    const holiday=isHoliday(d,rekapMonth,rekapYear);const keyM=`${rekapYear}-${rekapMonth}-${d}-masuk`;const keyP=`${rekapYear}-${rekapMonth}-${d}-pulang`;const valM=p.absensi[keyM]||'';const valP=p.absensi[keyP]||'';
+                    let displayH=Math.floor(calculateRawHours(valM,valP));
+                    if(holiday){if(displayH>8)displayH=8;}else{if(displayH>4)displayH=4;}
+                    totalHours+=displayH;
+                    bodyHTML+=`<td class="${holiday?'weekend':''}">${displayH}</td>`;
+                }
+                bodyHTML+=`<td style="font-weight:bold;">${totalHours}</td></tr>`;
+            });
+            tbody.innerHTML=bodyHTML;
+        }
+        function changeRekapMonth(d){rekapMonth+=d;if(rekapMonth>11){rekapMonth=0;rekapYear++;}else if(rekapMonth<0){rekapMonth=11;rekapYear--;}renderRekapTable();}
+
+        function printRekap(){
+            const key=getMonthKey(rekapYear,rekapMonth);const pegawaiList=allPegawaiData[key]||[];
+            if(pegawaiList.length===0){showToast("Tidak ada data untuk dicetak",true);return;}
+            let rows='';let no=1;
+            pegawaiList.forEach(p=>{
+                const daysInMonth=getDaysInMonth(rekapMonth,rekapYear);
+                for(let d=1;d<=daysInMonth;d++){
+                    const holiday=isHoliday(d,rekapMonth,rekapYear);
+                    const keyM=`${rekapYear}-${rekapMonth}-${d}-masuk`; const keyP=`${rekapYear}-${rekapMonth}-${d}-pulang`;
+                    const valM=p.absensi[keyM]||''; const valP=p.absensi[keyP]||'';
+                    let rawH=calculateRawHours(valM,valP);
+                    let displayH=Math.floor(rawH);
+                    if(holiday){if(displayH>8)displayH=8;}else{if(displayH>4)displayH=4;}
+                    if(displayH>0){
+                        const dateStr=`${d} ${monthNames[rekapMonth]} ${rekapYear}`;
+                        rows+=`<tr><td style="text-align:center;">${no++}</td><td>${p.nama}</td><td>${dateStr}</td><td style="text-align:center;">${displayH}</td></tr>`;
+                    }
+                }
+            });
+            if(no===1){showToast("Tidak ada jam lembur untuk dicetak",true);return;}
+            const period=`${monthNames[rekapMonth]} ${rekapYear}`;
+            const content=`
+                <!DOCTYPE html><html><head><title>Cetak Rekap Jam Lembur</title>
+                <style>
+                    @page{size:A4 portrait;margin:10mm;}
+                    body{font-family:Arial,sans-serif;font-size:10pt;margin:0;}
+                    h2{text-align:center;margin-bottom:0;}
+                    h3{text-align:center;margin-top:0;font-weight:normal;margin-bottom:15px;}
+                    table{width:100%;border-collapse:collapse;}
+                    th,td{border:1px solid black;padding:4px;}
+                    th{background-color:#f2f2f2;text-align:center;}
+                    td:nth-child(3){text-align:left;}
+                    td:nth-child(4){text-align:center;}
+                </style></head>
+                <body>
+                    <h2>REKAP JAM LEMBUR</h2>
+                    <h3>PERIODE : ${period}</h3>
+                    <table><thead><tr><th style="width:30px;">No</th><th>Nama Pegawai</th><th>Tanggal</th><th style="width:60px;">Jumlah Jam</th></tr></thead><tbody>${rows}</tbody></table>
+                </body></html>`;
+            const printWindow=window.open('','_blank');
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+
+        function getGolonganGroup(g){if(g.startsWith('IV'))return'IV';return'III';}
+        function calculateOvertimeCounts(pegawai,month,year){const days=getDaysInMonth(month,year);const counts={HB2:0,HB3:0,HB4:0,HL2:0,HL3:0,HL4:0,HL5:0,HL6:0,HL7:0,HL8:0};for(let d=1;d<=days;d++){const keyM=`${year}-${month}-${d}-masuk`;const keyP=`${year}-${month}-${d}-pulang`;const masuk=pegawai.absensi[keyM];const pulang=pegawai.absensi[keyP];if(!masuk||!pulang)continue;const holiday=isHoliday(d,month,year);const dayOfWeek=new Date(year,month,d).getDay();if(holiday){let workHours=calculateRawHours(masuk,pulang);if(workHours>8)workHours=8;const intWork=Math.floor(workHours);if(intWork>=2){const key=`HL${intWork}`;if(counts.hasOwnProperty(key))counts[key]++;}}else{let overtimeHours=calculateDailyOvertime(masuk,pulang,dayOfWeek,false,year,month,d);if(overtimeHours>0){if(overtimeHours>4)overtimeHours=4;const intOT=Math.floor(overtimeHours);if(intOT>=2){const key=`HB${intOT}`;if(counts.hasOwnProperty(key))counts[key]++;}}}}return counts;}
+        function calculateLemburFinancials(group,counts){const rates=lemburRates[group]||lemburRates['III'];let totalPay=0;let totalMeals=0;const types=['HB','HL'];types.forEach(type=>{const maxH=type==='HB'?4:8;for(let i=2;i<=maxH;i++){const key=`${type}${i}`;const cnt=counts[key]||0;if(cnt>0){totalPay+=cnt*rates[type][i];totalMeals+=cnt;}}});const bruto=totalPay+(totalMeals*rates.meal);const pph21=bruto*rates.taxRate;const netto=bruto-pph21;return{bruto,pph21,netto};}
+        
+        function renderLemburTable(){const key=getMonthKey(lemburYear,lemburMonth);const pegawaiList=allPegawaiData[key]||[];const tbody=document.getElementById('lemburTableBody');const tfoot=document.getElementById('lemburTableFoot');const thead=document.getElementById('lemburTableHead');document.getElementById('lemburMonthLabel').textContent=`${monthNames[lemburMonth]} ${lemburYear}`;
+        thead.innerHTML=`<tr><th rowspan="3" class="lembur-sticky-left">No</th><th rowspan="3" class="lembur-sticky-left-2">Nama</th><th colspan="10" class="lembur-header-hb">Jumlah</th><th rowspan="2" colspan="3" class="lembur-header-fin lembur-sticky-right">Jumlah</th></tr><tr><th colspan="3" class="lembur-header-hb">Hari Biasa</th><th colspan="7" class="lembur-header-hl">Hari Libur</th></tr><tr><th class="lembur-header-hb">HB2</th><th class="lembur-header-hb">HB3</th><th class="lembur-header-hb">HB4</th><th class="lembur-header-hl">HL2</th><th class="lembur-header-hl">HL3</th><th class="lembur-header-hl">HL4</th><th class="lembur-header-hl">HL5</th><th class="lembur-header-hl">HL6</th><th class="lembur-header-hl">HL7</th><th class="lembur-header-hl">HL8</th><th class="lembur-header-fin" style="text-align:right;">Bruto</th><th class="lembur-header-fin" style="text-align:right;">PPh21</th><th class="lembur-header-fin lembur-sticky-right" style="text-align:right;">Diterima</th></tr>`;
+        if(pegawaiList.length===0){tbody.innerHTML='';tfoot.innerHTML='';document.getElementById('lemburEmptyState').style.display='block';return;}document.getElementById('lemburEmptyState').style.display='none';
+        let bodyHTML='';let grandTotals={HB2:0,HB3:0,HB4:0,HL2:0,HL3:0,HL4:0,HL5:0,HL6:0,HL7:0,HL8:0,bruto:0,pph21:0,netto:0};
+        pegawaiList.forEach((p,i)=>{const group=getGolonganGroup(p.golongan);const counts=calculateOvertimeCounts(p,lemburMonth,lemburYear);const fin=calculateLemburFinancials(group,counts);
+        ['HB2','HB3','HB4','HL2','HL3','HL4','HL5','HL6','HL7','HL8'].forEach(k=>grandTotals[k]+=counts[k]);grandTotals.bruto+=fin.bruto;grandTotals.pph21+=fin.pph21;grandTotals.netto+=fin.netto;
+        bodyHTML+=`<tr><td class="font-semibold lembur-sticky-left">${i+1}</td><td class="text-left lembur-sticky-left-2">${p.nama}</td>`;['HB2','HB3','HB4'].forEach(k=>{bodyHTML+=`<td class="auto-fill-cell">${counts[k]}</td>`;});['HL2','HL3','HL4','HL5','HL6','HL7','HL8'].forEach(k=>{bodyHTML+=`<td class="auto-fill-cell" style="background:rgba(139,92,246,0.05)">${counts[k]}</td>`;});
+        bodyHTML+=`<td class="currency-cell lembur-sticky-right-2">${formatNum(fin.bruto)}</td><td class="currency-cell" style="color:var(--accent-red);">${formatNum(fin.pph21)}</td><td class="currency-cell lembur-sticky-right" style="font-weight:700;">${formatNum(fin.netto)}</td></tr>`;});
+        tbody.innerHTML=bodyHTML;let footHTML=`<tr class="total-row"><td class="lembur-sticky-left"></td><td class="text-left lembur-sticky-left-2 font-bold">TOTAL</td>`;['HB2','HB3','HB4'].forEach(k=>{footHTML+=`<td class="auto-fill-cell">${grandTotals[k]}</td>`;});['HL2','HL3','HL4','HL5','HL6','HL7','HL8'].forEach(k=>{footHTML+=`<td class="auto-fill-cell" style="background:rgba(139,92,246,0.05)">${grandTotals[k]}</td>`;});
+        footHTML+=`<td class="currency-cell lembur-sticky-right-2">${formatNum(grandTotals.bruto)}</td><td class="currency-cell" style="color:var(--accent-red);">${formatNum(grandTotals.pph21)}</td><td class="currency-cell lembur-sticky-right" style="font-weight:700;">${formatNum(grandTotals.netto)}</td></tr>`;tfoot.innerHTML=footHTML;}
+        function changeLemburMonth(d){lemburMonth+=d;if(lemburMonth>11){lemburMonth=0;lemburYear++;}else if(lemburMonth<0){lemburMonth=11;lemburYear--;}renderLemburTable();}
+
+        function printLembur(){
+            const key=getMonthKey(lemburYear,lemburMonth);const pegawaiList=allPegawaiData[key]||[];
+            if(pegawaiList.length===0){showToast("Tidak ada data untuk dicetak",true);return;}
+            let totals={bruto:0,pph21:0,netto:0};let rows='';
+            pegawaiList.forEach((p,i)=>{
+                const group=getGolonganGroup(p.golongan);
+                const counts=calculateOvertimeCounts(p,lemburMonth,lemburYear);
+                const fin=calculateLemburFinancials(group,counts);
+                totals.bruto+=fin.bruto;totals.pph21+=fin.pph21;totals.netto+=fin.netto;
+                rows+=`<tr><td style="text-align:center;">${i+1}</td><td>${p.nama}</td><td style="text-align:right;">${formatNum(fin.bruto)}</td><td style="text-align:right;">${formatNum(fin.pph21)}</td><td style="text-align:right;font-weight:bold;">${formatNum(fin.netto)}</td></tr>`;
+            });
+            rows+=`<tr style="font-weight:bold;background-color:#f0f0f0;"><td colspan="2" style="text-align:center;">TOTAL</td><td style="text-align:right;">${formatNum(totals.bruto)}</td><td style="text-align:right;">${formatNum(totals.pph21)}</td><td style="text-align:right;">${formatNum(totals.netto)}</td></tr>`;
+            const period=`${monthNames[lemburMonth]} ${lemburYear}`;
+            const content=`<!DOCTYPE html><html><head><title>Cetak Perhitungan Lembur</title><style>@page{size:A4 portrait;margin:15mm;}body{font-family:Arial,sans-serif;font-size:11pt;margin:0;}h2{text-align:center;margin-bottom:5px;}h3{text-align:center;margin-top:0;font-weight:normal;margin-bottom:20px;}table{width:100%;border-collapse:collapse;margin-top:10px;}th,td{border:1px solid black;padding:5px;font-size:10pt;}th{background-color:#f2f2f2;text-align:center;vertical-align:middle;}.sub-header{border-top:none;text-align:center;line-height:1.4;}</style></head><body><h2>PERHITUNGAN LEMBUR</h2><h3>Periode : ${period}</h3><table><thead><tr><th rowspan="2" style="width:30px;">No</th><th rowspan="2">Nama Pegawai</th><th colspan="3">Jumlah</th></tr><tr><th class="sub-header">Bruto<br>(Rp.)</th><th class="sub-header">Potongan PPh21<br>(Rp.)</th><th class="sub-header">Diterima<br>(Rp.)</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+            const printWindow=window.open('','_blank');printWindow.document.write(content);printWindow.document.close();printWindow.focus();printWindow.print();
+        }
+
+        // --- Common Functions ---
+        function toggleDropdown(el){document.querySelectorAll('.dropdown').forEach(dd=>{if(dd!==el.parentElement)dd.classList.remove('active');});el.parentElement.classList.toggle('active');}
+        function switchView(v){
+            document.querySelectorAll('.dropdown').forEach(dd=>dd.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l=>{l.classList.remove('active');});const mainLink=document.querySelector(`.nav-link[data-view="${v}"]`);if(mainLink)mainLink.classList.add('active');
+            document.querySelectorAll('.dropdown-item').forEach(l=>{l.classList.remove('active');});const subLink=document.querySelector(`.dropdown-item[data-view="${v}"]`);if(subLink){subLink.classList.add('active');subLink.closest('.dropdown').querySelector('.nav-link').classList.add('active');}
+            document.querySelectorAll('.view-section').forEach(s=>s.classList.remove('active'));document.getElementById(v+'View').classList.add('active');
+            if(v==='input-jam')generateTable();if(v==='rekap')renderRekapTable();if(v==='perhitungan')renderLemburTable();if(v==='dashboard'){updatePaguDisplay();}
+            if(v==='pengaturan'){ renderMasterPegawai(); setActiveSetting(document.querySelector('.settings-link'), false); }
+        }
+        function saveToStorage(){localStorage.setItem('absensiPegawaiData',JSON.stringify(allPegawaiData));}
+        function loadFromStorage(){const s=localStorage.getItem('absensiPegawaiData');if(s)allPegawaiData=JSON.parse(s);}
+        function saveHolidays(){localStorage.setItem('customHolidays',JSON.stringify(customHolidays));}
+        function loadHolidays(){const s=localStorage.getItem('customHolidays');if(s)customHolidays=JSON.parse(s);}
+        
+        function saveSettings(){ 
+            settings.masukMonThu=document.getElementById('masukMonThu').value;settings.pulangMonThu=document.getElementById('pulangMonThu').value;settings.masukFri=document.getElementById('masukFri').value;settings.pulangFri=document.getElementById('pulangFri').value;
+            settings.paguLembur=parseFloat(document.getElementById('settingsPaguLembur').value)||0;
+            settings.range1={start:document.getElementById('range1_start').value,end:document.getElementById('range1_end').value,masuk_mt:document.getElementById('range1_masuk_mt').value,pulang_mt:document.getElementById('range1_pulang_mt').value,masuk_fri:document.getElementById('range1_masuk_fri').value,pulang_fri:document.getElementById('range1_pulang_fri').value};
+            localStorage.setItem('absensiSettings',JSON.stringify(settings));generateTable();updatePaguDisplay();showToast('Disimpan otomatis');
+        }
+        
+        function loadSettings(){ 
+            const s=localStorage.getItem('absensiSettings'); 
+            if(s){ 
+                settings=JSON.parse(s); 
+                document.getElementById('masukMonThu').value=settings.masukMonThu||'07:30';document.getElementById('pulangMonThu').value=settings.pulangMonThu||'16:00';
+                document.getElementById('masukFri').value=settings.masukFri||'07:30';document.getElementById('pulangFri').value=settings.pulangFri||'16:30';
+                document.getElementById('settingsPaguLembur').value=settings.paguLembur||'';
+                if(settings.range1){document.getElementById('range1_start').value=settings.range1.start||'';document.getElementById('range1_end').value=settings.range1.end||'';document.getElementById('range1_masuk_mt').value=settings.range1.masuk_mt||'';document.getElementById('range1_pulang_mt').value=settings.range1.pulang_mt||'';document.getElementById('range1_masuk_fri').value=settings.range1.masuk_fri||'';document.getElementById('range1_pulang_fri').value=settings.range1.pulang_fri||'';}
+            } 
+            if(!settings.masterPegawai||settings.masterPegawai.length===0){settings.masterPegawai=defaultMasterList.map(n=>({nama:n,golongan:'III'}));saveSettings();}
+            else if(settings.masterPegawai[0]&&typeof settings.masterPegawai[0]==='string'){settings.masterPegawai=settings.masterPegawai.map(p=>{if(typeof p==='string')return{nama:p,golongan:'III'};return{...{nama:'',golongan:'III'},...p};});saveSettings();}
+        }
+        
+        function exportAllData(){
+            if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
+            saveSettings(); 
+            saveToStorage();
+            let backupCounter = parseInt(localStorage.getItem('backupCounter')) || 0;backupCounter++;localStorage.setItem('backupCounter', backupCounter);
+            const data={allPegawaiData,customHolidays,settings};
+            const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+            const link=document.createElement('a');
+            link.href=URL.createObjectURL(blob);
+            const filename = `backup_perhitungan_lembur_${backupCounter}.json`;
+            link.download=filename;
+            link.click();
+            showToast('Backup berhasil dibuat');
+        }
+
+        function importData(e){
+            const file=e.target.files[0];if(!file)return;
+            const reader=new FileReader();
+            reader.onload=function(ev){
+                try{
+                    const data=JSON.parse(ev.target.result);
+                    if(data.allPegawaiData)allPegawaiData=data.allPegawaiData;
+                    if(data.customHolidays)customHolidays=data.customHolidays;
+                    if(data.settings)settings=data.settings;
+                    saveToStorage();saveHolidays();loadSettings();
+                    generateTable();renderLemburTable();renderRekapTable();updateInputStats();updatePaguDisplay();renderMasterPegawai();
+                    showToast('Import berhasil');
+                }catch(err){showToast('Gagal',true);}
+            };
+            reader.readAsText(file);
+        }
+        function resetAllData(){if(confirm('Hapus semua?')){allPegawaiData={};customHolidays=[];settings={paguLembur:0,range1:{},masterPegawai:[]};saveToStorage();saveHolidays();loadSettings();generateTable();renderLemburTable();renderRekapTable();updateInputStats();updatePaguDisplay();renderMasterPegawai();}}
+        function showToast(msg,isErr){const t=document.getElementById('toast');document.getElementById('toastMessage').textContent=msg;t.className="toast show"+(isErr?" error":"");setTimeout(()=>t.classList.remove('show'),2000);}
+    </script>
+</body>
+</html>
