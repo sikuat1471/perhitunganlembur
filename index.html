@@ -233,7 +233,7 @@
         <section id="dashboardView" class="view-section active">
             <div class="dashboard-header">
                 <div class="relative z-10">
-                    <h2 class="font-display text-3xl font-bold mb-2">PERHITUNGAN LEMBUR PEGAWAI</h2>
+                    <h2 class="font-display text-3xl font-bold mb-2">MONITORING LEMBUR PEGAWAI</h2>
                     <p class="opacity-90 text-2xl font-light">BPS Kota Pekanbaru</p>
                 </div>
             </div>
@@ -461,7 +461,7 @@
                              </div>
                          </div>
                          <div class="settings-group mt-6">
-                             <h4>Rentang Tanggal Khusus 1</h4>
+                             <h4>Rentang Tanggal Khusus</h4>
                              <p class="text-xs text-gray-400 mb-2">Pengaturan ini akan masuk ke file Backup.</p>
                              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                                  <div><label class="text-xs font-medium">Tanggal Mulai</label><input type="date" id="range1_start" class="input-field" onchange="saveSettings()"></div>
@@ -489,7 +489,7 @@
                          <h3 class="font-display text-lg font-bold text-gray-800 mb-4">Manajemen Data</h3>
                          <div class="settings-item border-0 p-0 mb-4"><div><h3 class="font-semibold text-gray-800">Export Data (Backup)</h3><p class="text-xs text-gray-400">Mencakup Pagu, Rentang Tanggal, dan Absensi.</p></div><button class="btn-secondary" onclick="exportAllData()">Export</button></div>
                          <div class="settings-item border-0 p-0 mb-4"><div><h3 class="font-semibold text-gray-800">Import Data</h3></div><label class="btn-secondary cursor-pointer">Import<input type="file" accept=".json" onchange="importData(event)" class="hidden"></label></div>
-                         <div class="settings-item border-0 p-0"><div><h3 class="font-semibold text-red-600">Hapus Semua</h3></div><button class="btn-danger-sm" onclick="resetAllData()" style="padding: 0.5rem 1rem;">Hapus</button></div>
+                         <div class="settings-item border-0 p-0"><div><h3 class="font-semibold text-red-600">Hapus Semua (Menghapus Seluruh Data)</h3></div><button class="btn-danger-sm" onclick="resetAllData()" style="padding: 0.5rem 1rem;">Hapus</button></div>
                      </div>
                  </div>
              </div>
