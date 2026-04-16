@@ -541,7 +541,6 @@
                 <div class="space-y-4">
                     <div>
                         <label class="text-xs font-medium">Nama Pegawai <span class="text-red-500">*</span></label>
-                        <!-- ID untuk input nama adalah masterNama -->
                         <input type="text" id="masterNama" class="input-field" required placeholder="Nama lengkap">
                     </div>
                     <div>
@@ -599,14 +598,13 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            loadFromStorage(); loadSettings(); loadHolidays(); updateCurrentDate(); 
+            loadFromStorage(); loadSettings(); loadHolidays(); 
             generateTable(); renderLemburTable(); renderRekapTable(); updateInputStats(); renderMasterPegawai();
             updatePaguDisplay();
         });
 
         // --- Helpers ---
         function getMonthKey(y, m) { return `${y}-${m}`; }
-        function updateCurrentDate() { document.getElementById('currentDate').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
         function getDaysInMonth(month, year) { return new Date(year, month + 1, 0).getDate(); }
         function formatNum(num) { return new Intl.NumberFormat('id-ID').format(num); }
         
@@ -771,7 +769,7 @@
             thead.innerHTML = headerHTML;
             
             const tbody = document.getElementById('tableBody');
-            if (pegawaiList.length === 0) { tbody.innerHTML = ''; document.getElementById('emptyState').style.display = 'block'; document.getElementById('tableWrapper').style.display = 'none'; document.getElementById('paginationControls').style.display = 'none'; return; }
+            if (pegawaiList.length === 0) { tbody.innerHTML = ''; document.getElementById('emptyState').style.display = 'block'; document.getElementById('tableWrapper').style.display = 'none'; document.getElementById('paginationControls').style.display = 'none'; updateInputStats(); return; }
             document.getElementById('emptyState').style.display = 'none'; document.getElementById('tableWrapper').style.display = 'block'; document.getElementById('paginationControls').style.display = 'flex';
             renderPagination(fullPegawaiList.length);
             let bodyHTML = '';
@@ -798,10 +796,11 @@
                 bodyHTML += `<td class="sticky-col-aksi"><div style="display: flex; gap: 2px; justify-content: center;"><button class="btn-edit-sm" onclick="editPegawai('${p.id}', '${p.nama}', '${p.golongan}')"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button><button class="btn-danger-sm" onclick="deletePegawai('${p.id}')"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div></td></tr>`;
             });
             tbody.innerHTML = bodyHTML;
+            updateInputStats();
         }
 
         function updateAbsensi(monthKey, id, keyTime, val){const list=allPegawaiData[monthKey];if(!list)return;const p=list.find(x=>x.id===id);if(p){p.absensi[keyTime]=val;saveToStorage();generateTable();if(document.getElementById('perhitunganView').classList.contains('active'))renderLemburTable();if(document.getElementById('rekapView').classList.contains('active'))renderRekapTable();updatePaguDisplay();}}
-        function changeMonth(d){currentMonth+=d;if(currentMonth>11){currentMonth=0;currentYear++;}else if(currentMonth<0){currentMonth=11;currentYear--;}currentPage=1;generateTable();updateInputStats();updatePaguDisplay();lemburMonth=currentMonth;lemburYear=currentYear;renderLemburTable();rekapMonth=currentMonth;rekapYear=currentYear;renderRekapTable();}
+        function changeMonth(d){currentMonth+=d;if(currentMonth>11){currentMonth=0;currentYear++;}else if(currentMonth<0){currentMonth=11;currentYear--;}currentPage=1;generateTable();updatePaguDisplay();lemburMonth=currentMonth;lemburYear=currentYear;renderLemburTable();rekapMonth=currentMonth;rekapYear=currentYear;renderRekapTable();}
         
         // --- Modal & Dropdown Logic ---
         function populatePegawaiDropdown(selectedName = "") {
@@ -853,10 +852,10 @@
                 allPegawaiData[key].push({id:Date.now().toString(),nama,golongan,absensi:{}});
                 showToast('Pegawai ditambahkan');
             }
-            saveToStorage();generateTable();renderLemburTable();renderRekapTable();updateInputStats();updatePaguDisplay();closeModal();
+            saveToStorage();generateTable();renderLemburTable();renderRekapTable();updatePaguDisplay();closeModal();
         }
         
-        function deletePegawai(id){if(confirm('Hapus pegawai ini?')){const key=getMonthKey(currentYear,currentMonth);allPegawaiData[key]=allPegawaiData[key].filter(p=>p.id!==id);saveToStorage();const remaining=allPegawaiData[key].length;const maxPage=Math.ceil(remaining/rowsPerPage);if(currentPage>maxPage)currentPage=maxPage||1;generateTable();renderLemburTable();renderRekapTable();updateInputStats();updatePaguDisplay();showToast('Dihapus');}}
+        function deletePegawai(id){if(confirm('Hapus pegawai ini?')){const key=getMonthKey(currentYear,currentMonth);allPegawaiData[key]=allPegawaiData[key].filter(p=>p.id!==id);saveToStorage();const remaining=allPegawaiData[key].length;const maxPage=Math.ceil(remaining/rowsPerPage);if(currentPage>maxPage)currentPage=maxPage||1;generateTable();renderLemburTable();renderRekapTable();updatePaguDisplay();showToast('Dihapus');}}
         function closeModal(){document.getElementById('modalOverlay').classList.remove('active');}
         function closeModalOutside(e){if(e.target===e.currentTarget)closeModal();}
 
@@ -885,14 +884,12 @@
             tbody.innerHTML = html;
         }
 
-        // PERBAIKAN: Fungsi Open Modal Master
         function openMasterModal(isEdit = false, index = -1){
             document.getElementById('masterPegawaiForm').reset();
             document.getElementById('masterEditIndex').value = "";
             
             if(isEdit && index !== -1){
                  const p = settings.masterPegawai[index];
-                 // PERBAIKAN BUG: 'masterNome' -> 'masterNama'
                  document.getElementById('masterNama').value = p.nama;
                  document.getElementById('masterGolongan').value = p.golongan;
                  document.getElementById('masterEditIndex').value = index;
@@ -1072,7 +1069,8 @@
             document.querySelectorAll('.nav-link').forEach(l=>{l.classList.remove('active');});const mainLink=document.querySelector(`.nav-link[data-view="${v}"]`);if(mainLink)mainLink.classList.add('active');
             document.querySelectorAll('.dropdown-item').forEach(l=>{l.classList.remove('active');});const subLink=document.querySelector(`.dropdown-item[data-view="${v}"]`);if(subLink){subLink.classList.add('active');subLink.closest('.dropdown').querySelector('.nav-link').classList.add('active');}
             document.querySelectorAll('.view-section').forEach(s=>s.classList.remove('active'));document.getElementById(v+'View').classList.add('active');
-            if(v==='input-jam')generateTable();if(v==='rekap')renderRekapTable();if(v==='perhitungan')renderLemburTable();if(v==='dashboard'){updatePaguDisplay();}
+            if(v==='input-jam'){generateTable();updateInputStats();}
+            if(v==='rekap')renderRekapTable();if(v==='perhitungan')renderLemburTable();if(v==='dashboard'){updatePaguDisplay();}
             if(v==='pengaturan'){ renderMasterPegawai(); setActiveSetting(document.querySelector('.settings-link'), false); }
         }
         function saveToStorage(){localStorage.setItem('absensiPegawaiData',JSON.stringify(allPegawaiData));}
