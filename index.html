@@ -1005,28 +1005,94 @@
             if(no===1){showToast("Tidak ada jam lembur untuk dicetak",true);return;}
             const period=`${monthNames[rekapMonth]} ${rekapYear}`;
             const content=`
-                <!DOCTYPE html><html><head><title>Cetak Rekap Jam Lembur</title>
-                <style>
-                    @page{size:A4 portrait;margin:10mm;}
-                    body{font-family:Arial,sans-serif;font-size:10pt;margin:0;}
-                    h2{text-align:center;margin-bottom:0;}
-                    h3{text-align:center;margin-top:0;font-weight:normal;margin-bottom:15px;}
-                    table{width:100%;border-collapse:collapse;}
-                    th,td{border:1px solid black;padding:4px;}
-                    th{background-color:#f2f2f2;text-align:center;}
-                    td:nth-child(3){text-align:left;}
-                    td:nth-child(4){text-align:center;}
-                </style></head>
-                <body>
-                    <h2>REKAP TANGGAL LEMBUR</h2>
-                    <h3>PERIODE : ${period}</h3>
-                    <table><thead><tr><th style="width:30px;">No</th><th>Nama Pegawai</th><th>Tanggal</th><th style="width:50px;">Jumlah Jam</th></tr></thead><tbody>${rows}</tbody></table>
-                </body></html>`;
-            const printWindow=window.open('','_blank');
-            printWindow.document.write(content);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
+                 <!DOCTYPE html>
+<html>
+<head>
+<title>Cetak Rekap Jam Lembur</title>
+<style>
+    @page {
+        size: A4 portrait;
+        margin: 10mm 15mm; /* atas-bawah 10mm, kanan-kiri 15mm */
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 11pt;
+        margin: 0;
+    }
+
+    .container {
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 2px;
+        letter-spacing: 1px;
+    }
+
+    h3 {
+        text-align: center;
+        margin-top: 0;
+        font-weight: normal;
+        margin-bottom: 15px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    th, td {
+        border: 1px solid black;
+        padding: 6px;
+        font-size: 10pt;
+        word-wrap: break-word;
+    }
+
+    th {
+        background-color: #f2f2f2;
+        text-align: center;
+    }
+
+    th:nth-child(1), td:nth-child(1) { width: 6%; text-align: center; }
+    th:nth-child(2), td:nth-child(2) { width: 44%; text-align: left; }
+    th:nth-child(3), td:nth-child(3) { width: 30%; text-align: center; }
+    th:nth-child(4), td:nth-child(4) { width: 20%; text-align: center; }
+
+</style>
+</head>
+
+<body>
+<div class="container">
+    <h2>REKAP TANGGAL LEMBUR</h2>
+    <h3>PERIODE : ${period}</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Nama Pegawai</th>
+                <th>Tanggal</th>
+                <th>Jumlah Jam</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${rows}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
+`;
+
+const printWindow = window.open('', '_blank');
+printWindow.document.write(content);
+printWindow.document.close();
+printWindow.focus();
+printWindow.print();        
         }
 
         function getGolonganGroup(g){if(g.startsWith('IV'))return'IV';return'III';}
