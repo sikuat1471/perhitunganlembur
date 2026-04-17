@@ -1018,9 +1018,9 @@
                     td:nth-child(4){text-align:center;}
                 </style></head>
                 <body>
-                    <h2>REKAP JAM LEMBUR</h2>
+                    <h2>REKAP TANGGAL LEMBUR</h2>
                     <h3>PERIODE : ${period}</h3>
-                    <table><thead><tr><th style="width:30px;">No</th><th>Nama Pegawai</th><th>Tanggal</th><th style="width:60px;">Jumlah Jam</th></tr></thead><tbody>${rows}</tbody></table>
+                    <table><thead><tr><th style="width:30px;">No</th><th>Nama Pegawai</th><th>Tanggal</th><th style="width:50px;">Jumlah Jam</th></tr></thead><tbody>${rows}</tbody></table>
                 </body></html>`;
             const printWindow=window.open('','_blank');
             printWindow.document.write(content);
